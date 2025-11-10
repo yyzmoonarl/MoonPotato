@@ -20,7 +20,7 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-upx
 
-      - name: Compile & Compress
+      - name: Compile & UPX
         shell: msys2 {0}
         run: |
           x86_64-w64-mingw32-g++ potato.cpp -o potato-x64.exe \
@@ -30,25 +30,20 @@ jobs:
             -municode -mconsole
           
           upx --best --lzma potato-x64.exe
+          echo "=== 编译完成 ==="
+          ls -lh potato-x64.exe
 
       - name: Generate Base64
         run: |
           $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("potato-x64.exe"))
           $b64 | Out-File -Encoding ascii potato-x64.txt
+          echo "=== Base64 已生成 ==="
 
-      - name: Upload Artifacts
+      - name: Upload Artifacts（永久保存）
         uses: actions/upload-artifact@v4
         with:
-          name: GodPotato-Build
+          name: GodPotato-x64-14KB-UPX
           path: |
             potato-x64.exe
             potato-x64.txt
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.run_number }}
-          name: GodPotato v${{ github.run_number }}
-          files: |
-            potato-x64.exe
-            potato-x64.txt
+          retention-days: 90
