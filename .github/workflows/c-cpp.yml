@@ -1,49 +1,26 @@
-name: Build GodPotato
+name: Build Windows EXE
 
 on:
   push:
-    paths:
-      - 'potato.cpp'
+    branches: [ main ]
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-upx
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Compile & UPX
-        shell: msys2 {0}
-        run: |
-          x86_64-w64-mingw32-g++ potato.cpp -o potato-x64.exe \
-            -luserenv -lwtsapi32 -lws2_32 \
-            -static -s -Os -Wno-write-strings \
-            -Wl,--gc-sections,--strip-all \
-            -municode -mconsole
-          
-          upx --best --lzma potato-x64.exe
-          echo "=== 编译完成 ==="
-          ls -lh potato-x64.exe
+      - name: Compile main.cpp
+        run: cl /EHsc /W4 /O2 main.cpp /Fe:your_program.exe
 
-      - name: Generate Base64
-        run: |
-          $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("potato-x64.exe"))
-          $b64 | Out-File -Encoding ascii potato-x64.txt
-          echo "=== Base64 已生成 ==="
-
-      - name: Upload Artifacts（永久保存）
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GodPotato-x64-14KB-UPX
-          path: |
-            potato-x64.exe
-            potato-x64.txt
-          retention-days: 90
+          name: your_program
+          path: your_program.exe
