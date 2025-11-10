@@ -1,0 +1,56 @@
+name: Build GodPotato
+
+on:
+  push:
+    paths:
+      - 'potato.cpp'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-upx
+
+      - name: Compile x64
+        shell: msys2 {0}
+        run: |
+          x86_64-w64-mingw32-g++ potato.cpp -o potato-x64.exe \
+            -luserenv -lwtsapi32 -lws2_32 -static -s -Os \
+            -Wno-write-strings -Wl,--gc-sections,--strip-all
+
+      - name: UPX Compress
+        shell: msys2 {0}
+        run: upx --best --lzma potato-x64.exe
+
+      - name: Generate Base64
+        run: |
+          $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("potato-x64.exe"))
+          $b64 | Out-File -Encoding ascii potato-x64.txt
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GodPotato-Build
+          path: |
+            potato-x64.exe
+            potato-x64.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: GodPotato v${{ github.run_number }}
+          files: |
+            potato-x64.exe
+            potato-x64.txt
+          draft: false
+          prerelease: false
