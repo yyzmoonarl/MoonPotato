@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MinGW
+      - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
           update: true
@@ -20,16 +20,16 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-upx
 
-      - name: Compile x64
+      - name: Compile & Compress
         shell: msys2 {0}
         run: |
           x86_64-w64-mingw32-g++ potato.cpp -o potato-x64.exe \
-            -luserenv -lwtsapi32 -lws2_32 -static -s -Os \
-            -Wno-write-strings -Wl,--gc-sections,--strip-all
-
-      - name: UPX Compress
-        shell: msys2 {0}
-        run: upx --best --lzma potato-x64.exe
+            -luserenv -lwtsapi32 -lws2_32 \
+            -static -s -Os -Wno-write-strings \
+            -Wl,--gc-sections,--strip-all \
+            -municode -mconsole
+          
+          upx --best --lzma potato-x64.exe
 
       - name: Generate Base64
         run: |
@@ -52,5 +52,3 @@ jobs:
           files: |
             potato-x64.exe
             potato-x64.txt
-          draft: false
-          prerelease: false
